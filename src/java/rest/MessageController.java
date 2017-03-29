@@ -23,6 +23,7 @@ import javax.json.JsonObject;
 import static rest.DBUtils.getConnection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
 
 /**
  *
@@ -108,20 +109,26 @@ public class MessageController {
         return m.toJson();
     }
 
-    public JsonObject editJson(int id, JsonObject json) {
-        Message m = getById(id);
-        m.setTitle(json.getString("title", ""));
-        m.setContents(json.getString("contents", ""));
-        m.setAuthor(json.getString("author", ""));
-        String timeStr = json.getString("senttime", "");
+    public JsonObject editJson(int id, JsonObject json) throws ParseException {
         try {
-            m.setSenttime(sdf.parse(timeStr));
-        } catch (ParseException ex) {
-            // This sets the time to NOW if there's a failure parsing
-            m.setSenttime(new Date());
-            Logger.getLogger(Message.class.getName()).log(Level.SEVERE, null, "Failed Parsing Date: " + timeStr);
+            String title = json.getString("title");
+            String contents = json.getString("contents");
+            String author = json.getString("author");
+            String senttime = json.getString("senttime");
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement("UPDATE messages SET title=?, contents=?, author=?,senttime=? where id=?");
+            pstmt.setString(1, title);
+            pstmt.setString(2, contents);
+            pstmt.setString(3, author);
+            pstmt.setTime(4, (Time) sdf.parse(senttime));
+            pstmt.executeUpdate();
+            refresh();
+            
+            return getByIdJson(id);
+        } catch (SQLException ex) {
+            Logger.getLogger(MessageController.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
-        return m.toJson();
     }
 
     public boolean deleteById(int id) throws SQLException {
