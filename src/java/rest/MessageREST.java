@@ -69,7 +69,7 @@ public class MessageREST {
     @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response add(JsonObject json) {
+    public Response add(JsonObject json) throws ParseException {
         return Response.ok(msg_control.addJson(json)).build();
     }
 
@@ -77,7 +77,7 @@ public class MessageREST {
     @Path("{id}")
     @Consumes("application/json")
     @Produces("application/json")
-    public Response edit(@PathParam("id") int id, JsonObject json) {
+    public Response edit(@PathParam("id") int id, JsonObject json) throws ParseException {
         JsonObject jsonWithId = msg_control.editJson(id, json);
         if (jsonWithId != null) {
             return Response.ok(jsonWithId).build();
