@@ -5,6 +5,9 @@
  */
 package rest;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +20,9 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
+import static rest.DBUtils.getConnection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -31,8 +37,32 @@ public class MessageController {
     public MessageController() {
         
         messages = new ArrayList<>();
+        refresh();
     }
-
+    
+    public void refresh(){
+        
+        try {
+            Connection conn = DBUtils.getConnection();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT * FROM Products");
+            while (rs.next()) {
+                Message m = new Message();
+                m.setId(rs.getInt("id"));
+                m.setTitle(rs.getString("title"));
+                m.setContents(rs.getString("contents"));
+                m.setAuthor(rs.getString("author"));
+                m.setSenttime(rs.getTime("senttime"));
+               
+                messages.add(m);
+                
+            }
+            
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(MessageController.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
     public JsonArray getAllJson() {
         JsonArrayBuilder json = Json.createArrayBuilder();
@@ -41,6 +71,7 @@ public class MessageController {
         }
         return json.build();
     }
+
 
     public Message getById(int id) {
         for (Message m : messages) {
@@ -93,13 +124,20 @@ public class MessageController {
         return m.toJson();
     }
 
-    public boolean deleteById(int id) {
-        Message m = getById(id);
-        if (m != null) {
-            messages.remove(m);
+    public boolean deleteById(int id) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement("DELETE FROM messages WHERE id=?");
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            refresh();
             return true;
-        } else {
+        } catch (SQLException ex) {
+            Logger.getLogger(MessageController.class.getName()).log(Level.SEVERE, null, ex);
             return false;
+        } finally {
+            conn.close();
         }
     }
 
