@@ -103,10 +103,27 @@ public class MessageController {
         return json.build();
     }
 
-    public JsonObject addJson(JsonObject json) {
-        Message m = new Message(json);
-        messages.add(m);
-        return m.toJson();
+    public JsonObject addJson(JsonObject json) throws ParseException {
+        try {
+            String title = json.getString("title");
+            String contents = json.getString("contents");
+            String author = json.getString("author");
+            String senttime = json.getString("senttime");
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement("INSERT into messages (title, contents, author, senttime) VALUES(?, ?, ?, ?) ");
+            pstmt.setString(1, title);
+            pstmt.setString(2, contents);
+            pstmt.setString(3, author);
+            pstmt.setTime(4, (Time) sdf.parse(senttime));
+            pstmt.executeUpdate();
+            refresh();
+            return getByIdJson(messages.size()-1);
+            
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(MessageController.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
     }
 
     public JsonObject editJson(int id, JsonObject json) throws ParseException {
