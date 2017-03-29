@@ -5,6 +5,7 @@
  */
 package rest;
 
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
@@ -87,7 +88,7 @@ public class MessageREST {
 
     @DELETE
     @Path("{id}")
-    public Response del(@PathParam("id") int id) {
+    public Response del(@PathParam("id") int id) throws SQLException {
         if (msg_control.deleteById(id)) {
             return Response.ok().build();
         } else {
